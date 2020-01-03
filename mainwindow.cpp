@@ -40,7 +40,7 @@ void MainWindow::on_pushButton_clicked()
         return;
     }
     /* ВЫБОР ИМЕНИ СКАЧИВАЕМОГО ФАЙЛА */
-    QString fileName = (ui->listWidget->currentItem()->text()).split(' ')[0];
+    QString fileName = (ui->listWidget->currentItem()->text()).split(':')[0];
     size_t sizeOfFileName = fileName.length();
     QString fullFileName = folder + fileName;
     QByteArray sizeOfFileNameBytes;
@@ -191,7 +191,7 @@ void MainWindow::on_pushButton_3_clicked()
                 } else {
                     icon = ":/new/icons/unknown.png";
                 }
-                QListWidgetItem * item = new QListWidgetItem(QIcon(icon), Name + " (" + QString::number(sizeOfFile) + " B)");
+                QListWidgetItem * item = new QListWidgetItem(QIcon(icon), Name + ": " + QString::number(sizeOfFile) + " B");
                 ui->listWidget->addItem(item);
             }
         }
