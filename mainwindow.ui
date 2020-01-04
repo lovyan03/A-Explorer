@@ -145,7 +145,7 @@
      </rect>
     </property>
     <property name="text">
-     <string>Delete</string>
+     <string>Remove</string>
     </property>
    </widget>
    <widget class="QPushButton" name="pushButton_5">

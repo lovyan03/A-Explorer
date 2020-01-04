@@ -161,6 +161,7 @@ void MainWindow::on_pushButton_3_clicked()
                     ui->totalMemory->setText(QString::number((int32_t)totalMemory));
                     ui->usedMemory->setText(QString::number((int32_t)usedMemory));
                     recived.clear();
+                    ui->listWidget->clear();
                     mode = "LIST";
                     serial.write("L");
                 }
@@ -196,6 +197,21 @@ void MainWindow::on_pushButton_3_clicked()
                     ui->listWidget->addItem(item);
                 }
             }
+
+            else if (mode == "REMOVE") {
+                if (recived.length() == 1) {
+                    if (recived[0] == 'R') {
+                        mode = "MEMORY";
+                        serial.write("M");
+                    }
+                    else if (recived[0] == 'r') {
+                        ui->statusbar->showMessage("E: can't remove the file");
+                    }
+                    else {}
+                    recived.clear();
+                }
+            }
+
         });
         connected = true;
     } else {
@@ -237,6 +253,17 @@ void MainWindow::on_pushButton_4_clicked()
         msgBox.setInformativeText("Do you want to delete " + (ui->listWidget->currentItem()->text()) + "?");
         msgBox.setStandardButtons(QMessageBox::Yes | QMessageBox::Cancel);
         msgBox.setDefaultButton(QMessageBox::Cancel);
-        int ret = msgBox.exec();
+        int r = msgBox.exec();
+        if (r == QMessageBox::Yes) {
+            mode = "REMOVE";
+            QByteArray sizeOfFilename;
+            sizeOfFilename.append(((ui->listWidget->currentItem()->text()).length() >> 24) & 0xFF);
+            sizeOfFilename.append(((ui->listWidget->currentItem()->text()).length() >> 16) & 0xFF);
+            sizeOfFilename.append(((ui->listWidget->currentItem()->text()).length() >> 8) & 0xFF);
+            sizeOfFilename.append((ui->listWidget->currentItem()->text()).length() & 0xFF);
+            serial.write("R");
+            serial.write(sizeOfFilename);
+            serial.write((ui->listWidget->currentItem()->text()).toUtf8().constData());
+        }
     }
 }
