@@ -3,6 +3,7 @@
 #include <QSerialPortInfo>
 #include <QSerialPort>
 #include <QFileDialog>
+#include <QMessageBox>
 
 bool connected = false;
 QSerialPort serial;
@@ -20,12 +21,7 @@ MainWindow::MainWindow(QWidget *parent)
     , ui(new Ui::MainWindow)
 {
     ui->setupUi(this);
-    QList<QSerialPortInfo> com_ports = QSerialPortInfo::availablePorts();
-    QSerialPortInfo port;
-    foreach(port, com_ports)
-    {
-        ui->comboBox->addItem(port.portName());
-    }
+    on_pushButton_6_clicked();
 }
 
 MainWindow::~MainWindow()
@@ -52,7 +48,7 @@ void MainWindow::on_pushButton_clicked()
     sizeOfFileNameBytes.append((sizeOfFileName >> 8) & 0xFF);
     sizeOfFileNameBytes.append(sizeOfFileName & 0xFF);
     file.setFileName(fullFileName);
-    ui->statusbar->showMessage("downloading...");
+    ui->statusbar->showMessage("downloading, please wait...");
 
     /* ДЕЙСТВИЯ С ПОСЛЕДОВАТЕЛЬНЫМ ПОРТОМ */
     mode = "DOWNLOAD";
@@ -115,7 +111,7 @@ void MainWindow::on_pushButton_3_clicked()
         ui->pushButton_3->setText("disconnect");
 
         // ИНИЦИАЛИЗАЦИЯ КОМ-ПОРТА
-        serial.setPortName("cu.SLAB_USBtoUART");
+        serial.setPortName(ui->comboBox->currentText());
         serial.setBaudRate(QSerialPort::Baud115200);
         serial.setDataBits(QSerialPort::Data8);
         serial.setParity(QSerialPort::NoParity);
@@ -136,7 +132,6 @@ void MainWindow::on_pushButton_3_clicked()
                     if (recived.length() >= 4) {
                         sizeOfFile = (scti(recived[0]) << 24) | (scti(recived[1]) << 16) | (scti(recived[2]) << 8) | scti(recived[3]);
                         recived.remove(0, 4);
-                        ui->statusbar->showMessage(QString::number(sizeOfFile));
                     }
                 }
                 if (recived.length() == sizeOfFile) {
@@ -197,7 +192,7 @@ void MainWindow::on_pushButton_3_clicked()
                     } else {
                         icon = ":/new/icons/unknown.png";
                     }
-                    QListWidgetItem * item = new QListWidgetItem(QIcon(icon), Name + ": " + QString::number(sizeOfFile) + " B");
+                    QListWidgetItem * item = new QListWidgetItem(QIcon(icon), Name); // + ": " + QString::number(sizeOfFile) + " B"
                     ui->listWidget->addItem(item);
                 }
             }
@@ -210,5 +205,38 @@ void MainWindow::on_pushButton_3_clicked()
 
         serial.close();
         connected = false;
+    }
+}
+
+void MainWindow::on_listWidget_itemClicked(QListWidgetItem *item)
+{
+    ui->statusbar->showMessage("");
+}
+
+void MainWindow::on_pushButton_6_clicked()
+{
+    ui->comboBox->clear();
+    QList<QSerialPortInfo> com_ports = QSerialPortInfo::availablePorts();
+    QSerialPortInfo port;
+    foreach(port, com_ports)
+    {
+        ui->comboBox->addItem(port.portName());
+    }
+    int index = ui->comboBox->findText("cu.SLAB_USBtoUART");
+    if ( index != -1 ) {
+       ui->comboBox->setCurrentIndex(index);
+    }
+}
+
+void MainWindow::on_pushButton_4_clicked()
+{
+    if (connected && ui->listWidget->currentItem()) {
+        QMessageBox msgBox;
+        msgBox.setIcon(QMessageBox::Warning);
+        msgBox.setText("Please, confirm removing the file");
+        msgBox.setInformativeText("Do you want to delete " + (ui->listWidget->currentItem()->text()) + "?");
+        msgBox.setStandardButtons(QMessageBox::Yes | QMessageBox::Cancel);
+        msgBox.setDefaultButton(QMessageBox::Cancel);
+        int ret = msgBox.exec();
     }
 }
