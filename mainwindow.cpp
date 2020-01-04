@@ -4,6 +4,7 @@
 #include <QSerialPort>
 #include <QFileDialog>
 
+bool connected = false;
 QSerialPort serial;
 QFile file;
 QByteArray recived;
@@ -104,96 +105,110 @@ void MainWindow::on_pushButton_2_clicked()
 
 void MainWindow::on_pushButton_3_clicked()
 {
-    // ИНИЦИАЛИЗАЦИЯ КОМ-ПОРТА
-    serial.setPortName("cu.SLAB_USBtoUART");
-    serial.setBaudRate(QSerialPort::Baud115200);
-    serial.setDataBits(QSerialPort::Data8);
-    serial.setParity(QSerialPort::NoParity);
-    serial.setStopBits(QSerialPort::OneStop);
-    serial.setFlowControl(QSerialPort::NoFlowControl);
-    serial.open(QIODevice::ReadWrite);
+    // UI ПО-УМОЛЧАНИЮ
+    ui->statusbar->showMessage("");
+    ui->listWidget->clear();
+    ui->memory->setValue(0);
+    ui->totalMemory->setText("0");
+    ui->usedMemory->setText("0");
+    if (!connected) {
+        ui->pushButton_3->setText("disconnect");
 
-    if (serial.isOpen()) {
-        ui->statusbar->showMessage("port opened");
+        // ИНИЦИАЛИЗАЦИЯ КОМ-ПОРТА
+        serial.setPortName("cu.SLAB_USBtoUART");
+        serial.setBaudRate(QSerialPort::Baud115200);
+        serial.setDataBits(QSerialPort::Data8);
+        serial.setParity(QSerialPort::NoParity);
+        serial.setStopBits(QSerialPort::OneStop);
+        serial.setFlowControl(QSerialPort::NoFlowControl);
+
+        if (!serial.open(QIODevice::ReadWrite)) {
+            ui->statusbar->showMessage("E: can't use the port");
+        }
+
+        mode = "MEMORY";
+        serial.write("M");
+
+        QObject::connect(&serial, &QSerialPort::readyRead, [&] {
+            recived.append(serial.readAll());
+            if (mode == "DOWNLOAD") {
+                if (sizeOfFile == 0) {
+                    if (recived.length() >= 4) {
+                        sizeOfFile = (scti(recived[0]) << 24) | (scti(recived[1]) << 16) | (scti(recived[2]) << 8) | scti(recived[3]);
+                        recived.remove(0, 4);
+                        ui->statusbar->showMessage(QString::number(sizeOfFile));
+                    }
+                }
+                if (recived.length() == sizeOfFile) {
+                    file.open(QFile::WriteOnly);
+                    file.write(recived);
+                    file.close();
+                    recived.clear();
+                    mode = "";
+                    sizeOfFile = 0;
+                    ui->statusbar->showMessage("downloading complete");
+                }
+            }
+            else if (mode == "UPLOAD") {
+                if (recived[0] == 'U') {
+                    ui->statusbar->showMessage("uploading complete");
+                    recived.clear();
+                    mode = "";
+                }
+            }
+
+            else if (mode == "MEMORY") {
+                if (recived.length() >= 8) {
+                    size_t totalMemory = (scti(recived[0]) << 24) | (scti(recived[1]) << 16) | (scti(recived[2]) << 8) | scti(recived[3]);
+                    size_t usedMemory = (scti(recived[4]) << 24) | (scti(recived[5]) << 16) | (scti(recived[6]) << 8) | scti(recived[7]);
+                    ui->memory->setRange(0, totalMemory);
+                    ui->memory->setValue(usedMemory);
+                    ui->totalMemory->setText(QString::number((int32_t)totalMemory));
+                    ui->usedMemory->setText(QString::number((int32_t)usedMemory));
+                    recived.clear();
+                    mode = "LIST";
+                    serial.write("L");
+                }
+            }
+
+            else if (mode == "LIST") {
+                while (recived.length()) {
+                    uint8_t sizeOfName = (scti(recived[0]) << 24) | (scti(recived[1]) << 16) | (scti(recived[2]) << 8) | scti(recived[3]);
+                    size_t sizeOfFile = sizeOfFile = (scti(recived[4]) << 24) | (scti(recived[5]) << 16) | (scti(recived[6]) << 8) | scti(recived[7]);
+                    recived.remove(0, 8);
+                    QString Name = "";
+                    for (size_t i = 0; i < sizeOfName; i++) {
+                        Name.append(recived.at(i));
+                    }
+                    recived.remove(0, sizeOfName);
+                    QString extension;
+                    if ((Name.indexOf('.') > 0) <= 0) {
+                        extension = "unknown";
+                    } else {
+                        extension = (Name.split(".")[1]).toLower();
+                    }
+                    QString icon;
+                    if (extension == "txt") {
+                        icon = ":/new/icons/text.png";
+                    } else if ((extension == "bmp") || (extension == "jpg")) {
+                        icon = ":/new/icons/picture.png";
+                    } else if (extension == "wav") {
+                        icon = ":/new/icons/music.png";
+                    } else {
+                        icon = ":/new/icons/unknown.png";
+                    }
+                    QListWidgetItem * item = new QListWidgetItem(QIcon(icon), Name + ": " + QString::number(sizeOfFile) + " B");
+                    ui->listWidget->addItem(item);
+                }
+            }
+        });
+        connected = true;
     } else {
-        ui->statusbar->showMessage("E: can't open port");
+        ui->pushButton_3->setText("connect");
+
+        QObject::disconnect(&serial);
+
+        serial.close();
+        connected = false;
     }
-
-    mode = "MEMORY";
-
-    serial.write("M");
-
-    QObject::connect(&serial, &QSerialPort::readyRead, [&] {
-        recived.append(serial.readAll());
-        if (mode == "DOWNLOAD") {
-            if (sizeOfFile == 0) {
-                if (recived.length() >= 4) {
-                    sizeOfFile = (scti(recived[0]) << 24) | (scti(recived[1]) << 16) | (scti(recived[2]) << 8) | scti(recived[3]);
-                    recived.remove(0, 4);
-                    ui->statusbar->showMessage(QString::number(sizeOfFile));
-                }
-            }
-            if (recived.length() == sizeOfFile) {
-                file.open(QFile::WriteOnly);
-                file.write(recived);
-                file.close();
-                recived.clear();
-                mode = "";
-                sizeOfFile = 0;
-                ui->statusbar->showMessage("downloading end.");
-            }
-        }
-        else if (mode == "UPLOAD") {
-            if (recived[0] == 'U') {
-                ui->statusbar->showMessage("uploading end.");
-                recived.clear();
-                mode = "";
-            }
-        }
-
-        else if (mode == "MEMORY") {
-            if (recived.length() >= 8) {
-                size_t totalMemory = (scti(recived[0]) << 24) | (scti(recived[1]) << 16) | (scti(recived[2]) << 8) | scti(recived[3]);
-                size_t usedMemory = (scti(recived[4]) << 24) | (scti(recived[5]) << 16) | (scti(recived[6]) << 8) | scti(recived[7]);
-                ui->memory->setRange(0, totalMemory);
-                ui->memory->setValue(usedMemory);
-                ui->totalMemory->setText(QString::number((int32_t)totalMemory));
-                ui->usedMemory->setText(QString::number((int32_t)usedMemory));
-                recived.clear();
-                mode = "LIST";
-                serial.write("L");
-            }
-        }
-
-        else if (mode == "LIST") {
-            while (recived.length()) {
-                uint8_t sizeOfName = (scti(recived[0]) << 24) | (scti(recived[1]) << 16) | (scti(recived[2]) << 8) | scti(recived[3]);
-                size_t sizeOfFile = sizeOfFile = (scti(recived[4]) << 24) | (scti(recived[5]) << 16) | (scti(recived[6]) << 8) | scti(recived[7]);
-                recived.remove(0, 8);
-                QString Name = "";
-                for (size_t i = 0; i < sizeOfName; i++) {
-                    Name.append(recived.at(i));
-                }
-                recived.remove(0, sizeOfName);
-                QString extension;
-                if ((Name.indexOf('.') > 0) <= 0) {
-                    extension = "unknown";
-                } else {
-                    extension = (Name.split(".")[1]).toLower();
-                }
-                QString icon;
-                if (extension == "txt") {
-                    icon = ":/new/icons/text.png";
-                } else if ((extension == "bmp") || (extension == "jpg")) {
-                    icon = ":/new/icons/picture.png";
-                } else if (extension == "wav") {
-                    icon = ":/new/icons/music.png";
-                } else {
-                    icon = ":/new/icons/unknown.png";
-                }
-                QListWidgetItem * item = new QListWidgetItem(QIcon(icon), Name + ": " + QString::number(sizeOfFile) + " B");
-                ui->listWidget->addItem(item);
-            }
-        }
-    });
 }
