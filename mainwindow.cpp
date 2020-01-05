@@ -171,6 +171,8 @@ void MainWindow::on_pushButton_3_clicked()
                 if (recived[0] == 'u') {
                     ui->statusbar->showMessage("uploading complete");
                     recived.clear();
+                    mode = "MEMORY";
+                    serial.write("M");
                 }
             }
 
