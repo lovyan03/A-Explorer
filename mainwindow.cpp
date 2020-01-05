@@ -11,9 +11,26 @@ QFile file;
 QByteArray recived;
 QString mode = "";
 int sizeOfFile = 0;
+QByteArray dataBytes;
+int writePos = 0;
 
 int scti(char ch) {
     return (ch < 0) ? (ch + 256) : ch;
+}
+
+void rightWrite() {
+    if (writePos >= dataBytes.length() - 32) {
+        serial.write("u");
+    } else {
+        serial.write("U");
+    }
+    int sizeOfPiece = 32;
+    QByteArray dataBytes_ = dataBytes.mid(writePos, sizeOfPiece);
+    QByteArray sizeOfPieceBytes;
+    sizeOfPieceBytes.append(sizeOfPiece);
+    serial.write(sizeOfPieceBytes);
+    serial.write(dataBytes_);
+    writePos += sizeOfPiece;
 }
 
 MainWindow::MainWindow(QWidget *parent)
@@ -22,7 +39,7 @@ MainWindow::MainWindow(QWidget *parent)
 {
     ui->setupUi(this);
     on_pushButton_6_clicked();
-    setWindowFlags(Qt::WindowMaximizeButtonHint);
+    setWindowFlags(Qt::WindowCloseButtonHint | Qt::WindowMinMaxButtonsHint);
 }
 
 MainWindow::~MainWindow()
@@ -83,7 +100,7 @@ void MainWindow::on_pushButton_2_clicked()
         ui->statusbar->showMessage("C: can't open uploading file");
         return;
     }
-    QByteArray dataBytes = f.readAll();
+    dataBytes = f.readAll();
     f.close();
     QByteArray sizeOfFilBytes;
     sizeOfFilBytes.append((dataBytes.length() >> 24) & 0xFF);
@@ -98,7 +115,6 @@ void MainWindow::on_pushButton_2_clicked()
     serial.write(sizeOfFileNameBytes);
     serial.write(sizeOfFilBytes);
     serial.write(fileName.toUtf8().constData());
-    serial.write(dataBytes);
 }
 
 void MainWindow::on_pushButton_3_clicked()
@@ -147,10 +163,14 @@ void MainWindow::on_pushButton_3_clicked()
                 }
             }
             else if (mode == "UPLOAD") {
-                if (recived[0] == 'U') {
+                if (recived[0] == 'A') {
+                    rightWrite();
+                    recived.clear();
+                }
+
+                if (recived[0] == 'u') {
                     ui->statusbar->showMessage("uploading complete");
                     recived.clear();
-                    mode = "";
                 }
             }
 
