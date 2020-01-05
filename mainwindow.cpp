@@ -12,25 +12,26 @@ QByteArray recived;
 QString mode = "";
 int sizeOfFile = 0;
 QByteArray dataBytes;
-int writePos = 0;
 
 int scti(char ch) {
     return (ch < 0) ? (ch + 256) : ch;
 }
 
 void rightWrite() {
-    if (writePos >= dataBytes.length() - 32) {
-        serial.write("u");
-    } else {
+    int bytesLength = dataBytes.length();
+    if (bytesLength) {
         serial.write("U");
+    } else {
+        serial.write("u");
+        return;
     }
     int sizeOfPiece = 32;
-    QByteArray dataBytes_ = dataBytes.mid(writePos, sizeOfPiece);
     QByteArray sizeOfPieceBytes;
-    sizeOfPieceBytes.append(sizeOfPiece);
+    int x = (bytesLength < sizeOfPiece) ? bytesLength : sizeOfPiece;
+    sizeOfPieceBytes.append(x);
     serial.write(sizeOfPieceBytes);
-    serial.write(dataBytes_);
-    writePos += sizeOfPiece;
+    serial.write(dataBytes, x);
+    dataBytes.remove(0, x);
 }
 
 MainWindow::MainWindow(QWidget *parent)
@@ -124,7 +125,7 @@ void MainWindow::on_pushButton_3_clicked()
     ui->listWidget->clear();
     ui->memory->setValue(0);
     ui->totalMemory->setText("0");
-    ui->usedMemory->setText("0");
+    ui->availableMemory->setText("0");
     if (!connected) {
         ui->pushButton_3->setText("disconnect");
 
@@ -183,7 +184,7 @@ void MainWindow::on_pushButton_3_clicked()
                     ui->memory->setRange(0, totalMemory);
                     ui->memory->setValue(usedMemory);
                     ui->totalMemory->setText(QString::number((int32_t)totalMemory));
-                    ui->usedMemory->setText(QString::number((int32_t)usedMemory));
+                    ui->availableMemory->setText(QString::number((int32_t)(totalMemory - usedMemory)));
                     recived.clear();
                     ui->listWidget->clear();
                     mode = "LIST";
