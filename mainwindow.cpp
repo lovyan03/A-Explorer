@@ -22,6 +22,7 @@ MainWindow::MainWindow(QWidget *parent)
 {
     ui->setupUi(this);
     on_pushButton_6_clicked();
+    setWindowFlags(Qt::WindowMaximizeButtonHint);
 }
 
 MainWindow::~MainWindow()
@@ -31,6 +32,7 @@ MainWindow::~MainWindow()
 
 void MainWindow::on_pushButton_clicked()
 {
+    if (!connected || !ui->listWidget->currentItem()) return;
     QString folder = QFileDialog::getExistingDirectory();
     if (folder.length() == 0) {
         ui->statusbar->showMessage("C: empty downloading path");
@@ -212,6 +214,20 @@ void MainWindow::on_pushButton_3_clicked()
                 }
             }
 
+            else if (mode == "ERASE") {
+                if (recived.length() == 1) {
+                    if (recived[0] == 'E') {
+                        mode = "MEMORY";
+                        serial.write("M");
+                    }
+                    else if (recived[0] == 'e') {
+                        ui->statusbar->showMessage("E: can't erase all files");
+                    }
+                    else {}
+                    recived.clear();
+                }
+            }
+
         });
         connected = true;
     } else {
@@ -246,24 +262,39 @@ void MainWindow::on_pushButton_6_clicked()
 
 void MainWindow::on_pushButton_4_clicked()
 {
-    if (connected && ui->listWidget->currentItem()) {
-        QMessageBox msgBox;
-        msgBox.setIcon(QMessageBox::Warning);
-        msgBox.setText("Please, confirm removing the file");
-        msgBox.setInformativeText("Do you want to delete " + (ui->listWidget->currentItem()->text()) + "?");
-        msgBox.setStandardButtons(QMessageBox::Yes | QMessageBox::Cancel);
-        msgBox.setDefaultButton(QMessageBox::Cancel);
-        int r = msgBox.exec();
-        if (r == QMessageBox::Yes) {
-            mode = "REMOVE";
-            QByteArray sizeOfFilename;
-            sizeOfFilename.append(((ui->listWidget->currentItem()->text()).length() >> 24) & 0xFF);
-            sizeOfFilename.append(((ui->listWidget->currentItem()->text()).length() >> 16) & 0xFF);
-            sizeOfFilename.append(((ui->listWidget->currentItem()->text()).length() >> 8) & 0xFF);
-            sizeOfFilename.append((ui->listWidget->currentItem()->text()).length() & 0xFF);
-            serial.write("R");
-            serial.write(sizeOfFilename);
-            serial.write((ui->listWidget->currentItem()->text()).toUtf8().constData());
-        }
+    if (!connected || !ui->listWidget->currentItem()) return;
+    QMessageBox msgBox;
+    msgBox.setIcon(QMessageBox::Warning);
+    msgBox.setText("Please, confirm removing the file");
+    msgBox.setInformativeText("Do you want to delete " + (ui->listWidget->currentItem()->text()) + "?");
+    msgBox.setStandardButtons(QMessageBox::Yes | QMessageBox::Cancel);
+    msgBox.setDefaultButton(QMessageBox::Cancel);
+    int r = msgBox.exec();
+    if (r == QMessageBox::Yes) {
+        mode = "REMOVE";
+        QByteArray sizeOfFilename;
+        sizeOfFilename.append(((ui->listWidget->currentItem()->text()).length() >> 24) & 0xFF);
+        sizeOfFilename.append(((ui->listWidget->currentItem()->text()).length() >> 16) & 0xFF);
+        sizeOfFilename.append(((ui->listWidget->currentItem()->text()).length() >> 8) & 0xFF);
+        sizeOfFilename.append((ui->listWidget->currentItem()->text()).length() & 0xFF);
+        serial.write("R");
+        serial.write(sizeOfFilename);
+        serial.write((ui->listWidget->currentItem()->text()).toUtf8().constData());
+    }
+}
+
+void MainWindow::on_pushButton_5_clicked()
+{
+    if (!connected) return;
+    QMessageBox msgBox;
+    msgBox.setIcon(QMessageBox::Warning);
+    msgBox.setText("Please, confirm erasing ALL files");
+    msgBox.setInformativeText("Do you want to erase?");
+    msgBox.setStandardButtons(QMessageBox::Yes | QMessageBox::Cancel);
+    msgBox.setDefaultButton(QMessageBox::Cancel);
+    int r = msgBox.exec();
+    if (r == QMessageBox::Yes) {
+        mode = "ERASE";
+        serial.write("E");
     }
 }
