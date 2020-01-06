@@ -12,14 +12,15 @@ QByteArray recived;
 QString mode = "";
 int sizeOfFile = 0;
 QByteArray dataBytes;
+int writeBytesLength;
 
 int scti(char ch) {
     return (ch < 0) ? (ch + 256) : ch;
 }
 
 void rightWrite() {
-    int bytesLength = dataBytes.length();
-    if (bytesLength) {
+    writeBytesLength = dataBytes.length();
+    if (writeBytesLength) {
         serial.write("U");
     } else {
         serial.write("u");
@@ -27,7 +28,7 @@ void rightWrite() {
     }
     int sizeOfPiece = 32;
     QByteArray sizeOfPieceBytes;
-    int x = (bytesLength < sizeOfPiece) ? bytesLength : sizeOfPiece;
+    int x = (writeBytesLength < sizeOfPiece) ? writeBytesLength : sizeOfPiece;
     sizeOfPieceBytes.append(x);
     serial.write(sizeOfPieceBytes);
     serial.write(dataBytes, x);
@@ -102,6 +103,7 @@ void MainWindow::on_pushButton_2_clicked()
         return;
     }
     dataBytes = f.readAll();
+    sizeOfFile = dataBytes.length();
     f.close();
     QByteArray sizeOfFilBytes;
     sizeOfFilBytes.append((dataBytes.length() >> 24) & 0xFF);
@@ -161,17 +163,24 @@ void MainWindow::on_pushButton_3_clicked()
                     mode = "";
                     sizeOfFile = 0;
                     ui->statusbar->showMessage("downloading complete");
+                } else {
+                    int p = (recived.length() * 100) / sizeOfFile;
+                    ui->statusbar->showMessage("downloaded " + QString::number(p) + "%");
                 }
+
             }
             else if (mode == "UPLOAD") {
                 if (recived[0] == 'A') {
                     rightWrite();
                     recived.clear();
+                    int p = 100 - (writeBytesLength * 100 / sizeOfFile);
+                    ui->statusbar->showMessage("uploaded " + QString::number(p) + "%");
                 }
 
                 if (recived[0] == 'u') {
                     ui->statusbar->showMessage("uploading complete");
                     recived.clear();
+                    sizeOfFile = 0;
                     mode = "MEMORY";
                     serial.write("M");
                 }
@@ -211,9 +220,9 @@ void MainWindow::on_pushButton_3_clicked()
                     QString icon;
                     if (extension == "txt") {
                         icon = ":/new/icons/text.png";
-                    } else if ((extension == "bmp") || (extension == "jpg")) {
+                    } else if ((extension == "bmp") || (extension == "jpg") || (extension == "png")) {
                         icon = ":/new/icons/picture.png";
-                    } else if (extension == "wav") {
+                    } else if ((extension == "wav") || (extension == "mp3") || (extension == "mid")) {
                         icon = ":/new/icons/music.png";
                     } else {
                         icon = ":/new/icons/unknown.png";
