@@ -34,3 +34,5 @@ else: unix:!android: target.path = /opt/$${TARGET}/bin
 
 RESOURCES += \
     res.qrc
+
+ICON = favicon.icns

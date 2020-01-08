@@ -191,7 +191,7 @@ void MainWindow::on_pushButton_3_clicked()
                     size_t totalMemory = (scti(recived[0]) << 24) | (scti(recived[1]) << 16) | (scti(recived[2]) << 8) | scti(recived[3]);
                     size_t usedMemory = (scti(recived[4]) << 24) | (scti(recived[5]) << 16) | (scti(recived[6]) << 8) | scti(recived[7]);
                     ui->memory->setRange(0, totalMemory);
-                    ui->memory->setValue(usedMemory);
+                    ui->memory->setValue(totalMemory - usedMemory);
                     ui->totalMemory->setText(QString::number((int32_t)totalMemory));
                     ui->availableMemory->setText(QString::number((int32_t)(totalMemory - usedMemory)));
                     recived.clear();
