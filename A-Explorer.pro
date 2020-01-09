@@ -32,7 +32,15 @@ qnx: target.path = /tmp/$${TARGET}/bin
 else: unix:!android: target.path = /opt/$${TARGET}/bin
 !isEmpty(target.path): INSTALLS += target
 
+# macOS
+ICON = favicon.icns
+
 RESOURCES += \
     res.qrc
+#
+#CONFIG += serialport
+#RC_FILE = favicon.rc
+#CONFIG+= static
+#QMAKE_LFLAGS_RELEASE += -static -static-libgcc
 
-ICON = favicon.icns
+
