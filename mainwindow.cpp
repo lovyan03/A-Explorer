@@ -35,6 +35,16 @@ void rightWrite() {
     dataBytes.remove(0, x);
 }
 
+QString getExtension(QString Name) {
+    QString extension;
+    if ((Name.indexOf('.') > 0) <= 0) {
+        extension = "";
+    } else {
+        extension = (Name.split(".")[1]).toLower();
+    }
+    return extension;
+}
+
 MainWindow::MainWindow(QWidget *parent)
     : QMainWindow(parent)
     , ui(new Ui::MainWindow)
@@ -148,7 +158,11 @@ void MainWindow::on_pushButton_3_clicked()
 
         QObject::connect(&serial, &QSerialPort::readyRead, [&] {
             recived.append(serial.readAll());
-            if (mode == "DOWNLOAD") {
+           if (mode == "REBOOT") {
+               recived.clear();
+           }
+
+           if  (mode == "DOWNLOAD") {
                 if (sizeOfFile == 0) {
                     if (recived.length() >= 4) {
                         sizeOfFile = (scti(recived[0]) << 24) | (scti(recived[1]) << 16) | (scti(recived[2]) << 8) | scti(recived[3]);
@@ -211,12 +225,7 @@ void MainWindow::on_pushButton_3_clicked()
                         Name.append(recived.at(i));
                     }
                     recived.remove(0, sizeOfName);
-                    QString extension;
-                    if ((Name.indexOf('.') > 0) <= 0) {
-                        extension = "unknown";
-                    } else {
-                        extension = (Name.split(".")[1]).toLower();
-                    }
+                    QString extension = getExtension(Name);
                     QString icon;
                     if (extension == "txt") {
                         icon = ":/new/icons/text.png";
@@ -260,13 +269,28 @@ void MainWindow::on_pushButton_3_clicked()
                 }
             }
 
+            else if (mode == "EXECUTE") {
+                if (recived.length() == 1) {
+                    if (recived[0] == 'X') {
+                        mode = "";
+                        ui->statusbar->showMessage("file succefull executed");
+                    }
+                    else if (recived[0] == 'x') {
+                        mode = "";
+                        ui->statusbar->showMessage("E: file not executed");
+                    }
+                    else {}
+                    recived.clear();
+                }
+            }
+            // more, baby
         });
         connected = true;
     } else {
         ui->pushButton_3->setText("connect");
 
         QObject::disconnect(&serial);
-
+        recived.clear();
         serial.close();
         connected = false;
     }
@@ -274,6 +298,7 @@ void MainWindow::on_pushButton_3_clicked()
 
 void MainWindow::on_listWidget_itemClicked(QListWidgetItem *item)
 {
+    item = NULL;
     ui->statusbar->showMessage("");
 }
 
@@ -329,4 +354,28 @@ void MainWindow::on_pushButton_5_clicked()
         mode = "ERASE";
         serial.write("E");
     }
+}
+
+void MainWindow::on_pushButton_7_clicked()
+{
+    QString Name = ui->listWidget->currentItem()->text();
+    if (!connected || !ui->listWidget->currentItem() || (getExtension(Name) == "")) return;
+    QByteArray sizeOfFilename;
+    sizeOfFilename.append((Name.length() >> 24) & 0xFF);
+    sizeOfFilename.append((Name.length() >> 16) & 0xFF);
+    sizeOfFilename.append((Name.length() >> 8) & 0xFF);
+    sizeOfFilename.append(Name.length()  & 0xFF);
+    mode = "EXECUTE";
+    serial.write("X");
+    serial.write(sizeOfFilename);
+    serial.write((ui->listWidget->currentItem()->text()).toUtf8().constData());
+}
+
+void MainWindow::on_pushButton_8_clicked()
+{
+    if (!connected) {
+        return;
+    }
+    mode ="REBOOT";
+    serial.write("Q");
 }
