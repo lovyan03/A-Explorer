@@ -264,7 +264,7 @@ void loop() {
     }
   }
   else if (f == 'Q') {
-    M5.Lcd.println("RESET MODE");
+    //M5.Lcd.println("RESET MODE");
     ESP.restart();
   }
 }
