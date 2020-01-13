@@ -50,8 +50,19 @@ MainWindow::MainWindow(QWidget *parent)
     , ui(new Ui::MainWindow)
 {
     ui->setupUi(this);
-    on_pushButton_6_clicked();
+
     setWindowFlags(Qt::WindowCloseButtonHint | Qt::WindowMinMaxButtonsHint);
+
+    ui->tableWidget->setColumnCount(3);
+    ui->tableWidget->setRowCount(0);
+    ui->tableWidget->setColumnWidth(0, 50);
+    ui->tableWidget->setColumnWidth(1, 200);
+    ui->tableWidget->setColumnWidth(2, 70);
+    ui->tableWidget->setHorizontalHeaderLabels(QStringList() << "Type" << "Name" << "Size, Bytes");
+    ui->tableWidget->verticalHeader()->hide();
+    ui->tableWidget->setSelectionBehavior(QAbstractItemView::SelectRows);
+
+    on_pushButton_6_clicked();
 }
 
 MainWindow::~MainWindow()
@@ -133,15 +144,6 @@ void MainWindow::on_pushButton_2_clicked()
 void MainWindow::on_pushButton_3_clicked()
 {
     // UI ПО-УМОЛЧАНИЮ
-    ui->tableWidget->setColumnCount(3);
-    ui->tableWidget->setRowCount(0);
-    ui->tableWidget->setHorizontalHeaderLabels(QStringList() << "Type" << "Name" << "Size, Bytes");
-    ui->tableWidget->setColumnWidth(0, 50);
-    ui->tableWidget->setColumnWidth(1, 135);
-    ui->tableWidget->setColumnWidth(2, 69);
-    ui->tableWidget->verticalHeader()->hide();
-    ui->tableWidget->setSelectionBehavior(QAbstractItemView::SelectRows);
-    ui->tableWidget->clear();
 
     ui->statusbar->showMessage("");
     ui->memory->setValue(0);
@@ -218,8 +220,9 @@ void MainWindow::on_pushButton_3_clicked()
                     ui->totalMemory->setText(QString::number(totalMemory));
                     ui->availableMemory->setText(QString::number((totalMemory - usedMemory)));
                     recived.clear();
+                    ui->tableWidget->setColumnCount(3);
                     ui->tableWidget->setRowCount(0);
-                    ui->tableWidget->clear();
+                    ui->tableWidget->setHorizontalHeaderLabels(QStringList() << "Type" << "Name" << "Size, Bytes");
                     mode = "LIST";
                     serial.write("L");
                 }
@@ -306,6 +309,11 @@ void MainWindow::on_pushButton_3_clicked()
         connected = true;
     } else {
         ui->pushButton_3->setText("connect");
+
+        ui->tableWidget->clear();
+        ui->tableWidget->setColumnCount(3);
+        ui->tableWidget->setRowCount(0);
+        ui->tableWidget->setHorizontalHeaderLabels(QStringList() << "Type" << "Name" << "Size, Bytes");
 
         QObject::disconnect(&serial);
         recived.clear();
