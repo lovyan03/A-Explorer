@@ -61,16 +61,16 @@ MainWindow::~MainWindow()
 
 void MainWindow::on_pushButton_clicked()
 {
-    if (!connected || !ui->listWidget->currentItem()) return;
+    if (!connected) return;
     QString folder = QFileDialog::getExistingDirectory();
     if (folder.length() == 0) {
         ui->statusbar->showMessage("C: empty downloading path");
         return;
     }
     /* ВЫБОР ИМЕНИ СКАЧИВАЕМОГО ФАЙЛА */
-    QString fileName = (ui->listWidget->currentItem()->text()).split(':')[0];
-    size_t sizeOfFileName = fileName.length();
-    QString fullFileName = folder + fileName;
+    QString Name = ui->tableWidget->selectedItems().at(1)->text();
+    size_t sizeOfFileName = Name.length();
+    QString fullFileName = folder + Name;
     QByteArray sizeOfFileNameBytes;
 
     /* ПОЛУЧЕНИЕ РАЗМЕРА ИМЕНИ СКАЧИВАЕМОГО ФАЙЛА */
@@ -85,7 +85,7 @@ void MainWindow::on_pushButton_clicked()
     mode = "DOWNLOAD";
     serial.write("D");
     serial.write(sizeOfFileNameBytes);
-    serial.write(fileName.toUtf8().constData());
+    serial.write(Name.toUtf8().constData());
 }
 
 void MainWindow::on_pushButton_2_clicked()
@@ -133,8 +133,17 @@ void MainWindow::on_pushButton_2_clicked()
 void MainWindow::on_pushButton_3_clicked()
 {
     // UI ПО-УМОЛЧАНИЮ
+    ui->tableWidget->setColumnCount(3);
+    ui->tableWidget->setRowCount(0);
+    ui->tableWidget->setHorizontalHeaderLabels(QStringList() << "Type" << "Name" << "Size, Bytes");
+    ui->tableWidget->setColumnWidth(0, 50);
+    ui->tableWidget->setColumnWidth(1, 135);
+    ui->tableWidget->setColumnWidth(2, 69);
+    ui->tableWidget->verticalHeader()->hide();
+    ui->tableWidget->setSelectionBehavior(QAbstractItemView::SelectRows);
+    ui->tableWidget->clear();
+
     ui->statusbar->showMessage("");
-    ui->listWidget->clear();
     ui->memory->setValue(0);
     ui->totalMemory->setText("0");
     ui->availableMemory->setText("0");
@@ -194,7 +203,7 @@ void MainWindow::on_pushButton_3_clicked()
                 if (recived[0] == 'u') {
                     ui->statusbar->showMessage("uploading complete");
                     recived.clear();
-                    sizeOfFile = 0;
+                    sizeOfFile = 0;                    
                     mode = "MEMORY";
                     serial.write("M");
                 }
@@ -209,7 +218,8 @@ void MainWindow::on_pushButton_3_clicked()
                     ui->totalMemory->setText(QString::number(totalMemory));
                     ui->availableMemory->setText(QString::number((totalMemory - usedMemory)));
                     recived.clear();
-                    ui->listWidget->clear();
+                    ui->tableWidget->setRowCount(0);
+                    ui->tableWidget->clear();
                     mode = "LIST";
                     serial.write("L");
                 }
@@ -226,18 +236,26 @@ void MainWindow::on_pushButton_3_clicked()
                     }
                     recived.remove(0, sizeOfName);
                     QString extension = getExtension(Name);
-                    QString icon;
+                    QString iconPath;
                     if (extension == "txt") {
-                        icon = ":/new/icons/text.png";
+                        iconPath = ":/new/icons/text.png";
                     } else if ((extension == "bmp") || (extension == "jpg") || (extension == "png")) {
-                        icon = ":/new/icons/picture.png";
+                        iconPath = ":/new/icons/picture.png";
                     } else if ((extension == "wav") || (extension == "mp3") || (extension == "mid")) {
-                        icon = ":/new/icons/music.png";
+                        iconPath = ":/new/icons/music.png";
                     } else {
-                        icon = ":/new/icons/unknown.png";
+                        iconPath = ":/new/icons/unknown.png";
                     }
-                    QListWidgetItem * item = new QListWidgetItem(QIcon(icon), Name); // + ": " + QString::number(sizeOfFile) + " B"
-                    ui->listWidget->addItem(item);
+
+                    QIcon icon(iconPath);
+                    QTableWidgetItem *icon_item = new QTableWidgetItem;
+                    icon_item->setIcon(icon);
+                    int row = ui->tableWidget->rowCount();
+                    ui->tableWidget->insertRow(row);
+                    ui->tableWidget->setItem(row, 0, icon_item);
+                    ui->tableWidget->setItem(row, 1, new QTableWidgetItem(Name));
+                    ui->tableWidget->setItem(row, 2, new QTableWidgetItem(QString::number(sizeOfFile)));
+
                 }
             }
 
@@ -296,12 +314,6 @@ void MainWindow::on_pushButton_3_clicked()
     }
 }
 
-void MainWindow::on_listWidget_itemClicked(QListWidgetItem *item)
-{
-    item = NULL;
-    ui->statusbar->showMessage("");
-}
-
 void MainWindow::on_pushButton_6_clicked()
 {
     ui->comboBox->clear();
@@ -319,24 +331,25 @@ void MainWindow::on_pushButton_6_clicked()
 
 void MainWindow::on_pushButton_4_clicked()
 {
-    if (!connected || !ui->listWidget->currentItem()) return;
+    if (!connected) return;
+    QString Name = ui->tableWidget->selectedItems().at(1)->text();
     QMessageBox msgBox;
     msgBox.setIcon(QMessageBox::Warning);
     msgBox.setText("Please, confirm removing the file");
-    msgBox.setInformativeText("Do you want to delete " + (ui->listWidget->currentItem()->text()) + "?");
+    msgBox.setInformativeText("Do you want to delete " + (Name) + "?");
     msgBox.setStandardButtons(QMessageBox::Yes | QMessageBox::Cancel);
     msgBox.setDefaultButton(QMessageBox::Cancel);
     int r = msgBox.exec();
     if (r == QMessageBox::Yes) {
         mode = "REMOVE";
         QByteArray sizeOfFilename;
-        sizeOfFilename.append(((ui->listWidget->currentItem()->text()).length() >> 24) & 0xFF);
-        sizeOfFilename.append(((ui->listWidget->currentItem()->text()).length() >> 16) & 0xFF);
-        sizeOfFilename.append(((ui->listWidget->currentItem()->text()).length() >> 8) & 0xFF);
-        sizeOfFilename.append((ui->listWidget->currentItem()->text()).length() & 0xFF);
+        sizeOfFilename.append((Name.length() >> 24) & 0xFF);
+        sizeOfFilename.append((Name.length() >> 16) & 0xFF);
+        sizeOfFilename.append((Name.length() >> 8) & 0xFF);
+        sizeOfFilename.append(Name.length() & 0xFF);
         serial.write("R");
         serial.write(sizeOfFilename);
-        serial.write((ui->listWidget->currentItem()->text()).toUtf8().constData());
+        serial.write(Name.toUtf8().constData());
     }
 }
 
@@ -358,8 +371,8 @@ void MainWindow::on_pushButton_5_clicked()
 
 void MainWindow::on_pushButton_7_clicked()
 {
-    QString Name = ui->listWidget->currentItem()->text();
-    if (!connected || !ui->listWidget->currentItem() || (getExtension(Name) == "")) return;
+    QString Name = ui->tableWidget->selectedItems().at(1)->text();
+    if (!connected || (getExtension(Name) == "")) return;
     QByteArray sizeOfFilename;
     sizeOfFilename.append((Name.length() >> 24) & 0xFF);
     sizeOfFilename.append((Name.length() >> 16) & 0xFF);
@@ -368,7 +381,7 @@ void MainWindow::on_pushButton_7_clicked()
     mode = "EXECUTE";
     serial.write("X");
     serial.write(sizeOfFilename);
-    serial.write((ui->listWidget->currentItem()->text()).toUtf8().constData());
+    serial.write(Name.toUtf8().constData());
 }
 
 void MainWindow::on_pushButton_8_clicked()
