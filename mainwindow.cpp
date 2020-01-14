@@ -72,7 +72,14 @@ MainWindow::~MainWindow()
 
 void MainWindow::on_pushButton_clicked()
 {
-    if (!connected) return;
+    if (!connected) {
+        ui->statusbar->showMessage("E: device don't connected");
+        return;
+    }
+    if (mode != "") {
+        ui->statusbar->showMessage("E: device busy");
+        return;
+    }
     QString folder = QFileDialog::getExistingDirectory();
     if (folder.length() == 0) {
         ui->statusbar->showMessage("C: empty downloading path");
@@ -101,6 +108,14 @@ void MainWindow::on_pushButton_clicked()
 
 void MainWindow::on_pushButton_2_clicked()
 {
+    if (!connected) {
+        ui->statusbar->showMessage("E: device don't connected");
+        return;
+    }
+    if (mode != "") {
+        ui->statusbar->showMessage("E: device busy");
+        return;
+    }
     /* ВЫБОР ИМЕНИ ФАЙЛА ВЫГРУЖАЕМОГО ФАЙЛА */
     QString fullFileName = QFileDialog::getOpenFileName();
     if (fullFileName.length() == 0) {
@@ -144,11 +159,12 @@ void MainWindow::on_pushButton_2_clicked()
 void MainWindow::on_pushButton_3_clicked()
 {
     // UI ПО-УМОЛЧАНИЮ
-
     ui->statusbar->showMessage("");
     ui->memory->setValue(0);
     ui->totalMemory->setText("0");
     ui->availableMemory->setText("0");
+
+    ui->pushButton_3->setText("connect");
     if (!connected) {
         ui->pushButton_3->setText("disconnect");
 
@@ -259,6 +275,7 @@ void MainWindow::on_pushButton_3_clicked()
                     ui->tableWidget->setItem(row, 1, new QTableWidgetItem(Name));
                     ui->tableWidget->setItem(row, 2, new QTableWidgetItem(QString::number(sizeOfFile)));
 
+                    mode = "";
                 }
             }
 
@@ -298,7 +315,7 @@ void MainWindow::on_pushButton_3_clicked()
                     }
                     else if (recived[0] == 'x') {
                         mode = "";
-                        ui->statusbar->showMessage("E: file not executed");
+                        ui->statusbar->showMessage("E: can't execute file");
                     }
                     else {}
                     recived.clear();
@@ -308,8 +325,6 @@ void MainWindow::on_pushButton_3_clicked()
         });
         connected = true;
     } else {
-        ui->pushButton_3->setText("connect");
-
         ui->tableWidget->clear();
         ui->tableWidget->setColumnCount(3);
         ui->tableWidget->setRowCount(0);
@@ -339,31 +354,49 @@ void MainWindow::on_pushButton_6_clicked()
 
 void MainWindow::on_pushButton_4_clicked()
 {
-    if (!connected) return;
-    QString Name = ui->tableWidget->selectedItems().at(1)->text();
+    if (!connected) {
+        ui->statusbar->showMessage("E: device don't connected");
+        return;
+    }
+    if (mode != "") {
+        ui->statusbar->showMessage("E: device busy");
+        return;
+    }
+    if (ui->tableWidget->currentRow() == -1) {
+        ui->statusbar->showMessage("E: file not selected");
+        return;
+    }
+    QString name = ui->tableWidget->selectedItems().at(1)->text();
     QMessageBox msgBox;
     msgBox.setIcon(QMessageBox::Warning);
     msgBox.setText("Please, confirm removing the file");
-    msgBox.setInformativeText("Do you want to delete " + (Name) + "?");
+    msgBox.setInformativeText("Do you want to delete " + name + "?");
     msgBox.setStandardButtons(QMessageBox::Yes | QMessageBox::Cancel);
     msgBox.setDefaultButton(QMessageBox::Cancel);
     int r = msgBox.exec();
     if (r == QMessageBox::Yes) {
         mode = "REMOVE";
         QByteArray sizeOfFilename;
-        sizeOfFilename.append((Name.length() >> 24) & 0xFF);
-        sizeOfFilename.append((Name.length() >> 16) & 0xFF);
-        sizeOfFilename.append((Name.length() >> 8) & 0xFF);
-        sizeOfFilename.append(Name.length() & 0xFF);
+        sizeOfFilename.append((name.length() >> 24) & 0xFF);
+        sizeOfFilename.append((name.length() >> 16) & 0xFF);
+        sizeOfFilename.append((name.length() >> 8) & 0xFF);
+        sizeOfFilename.append(name.length() & 0xFF);
         serial.write("R");
         serial.write(sizeOfFilename);
-        serial.write(Name.toUtf8().constData());
+        serial.write(name.toUtf8().constData());
     }
 }
 
 void MainWindow::on_pushButton_5_clicked()
 {
-    if (!connected) return;
+    if (!connected) {
+        ui->statusbar->showMessage("E: device don't connected");
+        return;
+    }
+    if (mode != "") {
+        ui->statusbar->showMessage("E: device busy");
+        return;
+    }
     QMessageBox msgBox;
     msgBox.setIcon(QMessageBox::Warning);
     msgBox.setText("Please, confirm erasing ALL files");
@@ -379,24 +412,40 @@ void MainWindow::on_pushButton_5_clicked()
 
 void MainWindow::on_pushButton_7_clicked()
 {
-    QString Name = ui->tableWidget->selectedItems().at(1)->text();
-    if (!connected || (getExtension(Name) == "")) return;
+    if (!connected) {
+        ui->statusbar->showMessage("E: device don't connected");
+        return;
+    }
+    if (mode != "") {
+        ui->statusbar->showMessage("E: device busy");
+        return;
+    }
+    if (ui->tableWidget->currentRow() == -1) {
+        ui->statusbar->showMessage("E: file not selected");
+        return;
+    }
+    QString name = ui->tableWidget->selectedItems().at(1)->text();
     QByteArray sizeOfFilename;
-    sizeOfFilename.append((Name.length() >> 24) & 0xFF);
-    sizeOfFilename.append((Name.length() >> 16) & 0xFF);
-    sizeOfFilename.append((Name.length() >> 8) & 0xFF);
-    sizeOfFilename.append(Name.length()  & 0xFF);
+    sizeOfFilename.append((name.length() >> 24) & 0xFF);
+    sizeOfFilename.append((name.length() >> 16) & 0xFF);
+    sizeOfFilename.append((name.length() >> 8) & 0xFF);
+    sizeOfFilename.append(name.length()  & 0xFF);
     mode = "EXECUTE";
     serial.write("X");
     serial.write(sizeOfFilename);
-    serial.write(Name.toUtf8().constData());
+    serial.write(name.toUtf8().constData());
 }
 
 void MainWindow::on_pushButton_8_clicked()
 {
     if (!connected) {
+        ui->statusbar->showMessage("E: device don't connected");
         return;
     }
-    mode ="REBOOT";
+    if (mode != "") {
+        ui->statusbar->showMessage("E: device busy");
+        return;
+    }
+    ui->statusbar->showMessage("");
     serial.write("Q");
 }
