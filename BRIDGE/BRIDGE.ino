@@ -3,7 +3,13 @@
 #include "FS.h"
 
 void bridge(void * pvParameters) {
-  SPIFFS.begin(true);
+  if (!SPIFFS.begin()) {
+    M5.Lcd.println("Format SPIFFS with plugin before using");
+    while(true) {
+      delay(5);
+    }
+  }
+  
   while (true) {
     while (Serial.available() == 0) delay(5);
     char f = Serial.read();
@@ -280,13 +286,13 @@ void loop() {
     M5.Lcd.setCursor(280, 220);
     switch (i) {
       case 0:
-        M5.Lcd.print("*  ");
+        M5.Lcd.print("*--");
         break;
       case 1:
-        M5.Lcd.print(" * ");
+        M5.Lcd.print("-*-");
         break;
       case 2:
-        M5.Lcd.print("  *");
+        M5.Lcd.print("--*");
         break;
     }
     delay(200);
