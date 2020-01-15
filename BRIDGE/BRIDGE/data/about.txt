@@ -1,0 +1,8 @@
+M5Stack (Five Stack Em) is a large innovative set for technical creativity.
+We were the first to discover the latest era in technical creativity and create a family of functional blocks. Bad contact, surface mounting, circuit boards without a case are now a thing of the past.
+The community is dedicated to the Internet of Things (IoT) on an ESP32 microcontroller from ESPRESSIF and a Kendryte K210 neural network chip.
+Our official Russian-speaking community has lessons, reviews, articles, podcasts, contests and much more. Participants enthusiastically discuss current issues and share experiences.
+
+#M5Stack #ESP32 #K210 #ESPRESSIF #KENDRYTE #IoT #Internet #Arduino #UIFlow #Blockly #MicroPython #electronics #programming #neuralNetwork
+
+Web: https://ru.m5stack.com/
