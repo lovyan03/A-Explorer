@@ -55,9 +55,9 @@ MainWindow::MainWindow(QWidget *parent)
     setWindowFlags(Qt::WindowCloseButtonHint | Qt::WindowMinMaxButtonsHint);
 
     ui->tableWidget->setColumnCount(3);
-    ui->tableWidget->setColumnWidth(0, 50);
-    ui->tableWidget->setColumnWidth(1, 200);
-    ui->tableWidget->setColumnWidth(2, 70);
+    ui->tableWidget->setColumnWidth(0, 40);
+    ui->tableWidget->setColumnWidth(1, 210);
+    ui->tableWidget->setColumnWidth(2, 65);
     ui->tableWidget->setSelectionBehavior(QAbstractItemView::SelectRows);
 }
 
