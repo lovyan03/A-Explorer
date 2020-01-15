@@ -83,6 +83,24 @@ void loop() {
   else if (f == 'L') {
     File root = SPIFFS.open("/");
     File file = root.openNextFile();
+    size_t sizeOfData = 0;
+    while (file) {
+      if (!file.isDirectory()) {
+        String Name = file.name();
+        size_t sizeOfName = Name.length();
+        sizeOfData += (sizeOfName + 8);
+      }
+      file = root.openNextFile();
+    }
+    root.close();
+
+    for (int i = 3; i > -1; i--) {
+      while (Serial.availableForWrite() < 1) delay(5);
+      Serial.write((sizeOfData >> (i * 8)) & 0xFF);
+    }
+    
+    root = SPIFFS.open("/");
+    file = root.openNextFile();
     while (file) {
       if (!file.isDirectory()) {
         String Name = file.name();
