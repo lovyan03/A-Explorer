@@ -409,7 +409,7 @@ void MainWindow::on_pushButton_4_clicked()
     }
     if (mode != "") {
         msgBox.setIcon(QMessageBox::Warning);
-        msgBox.setText("device is busy now" + mode);
+        msgBox.setText("device is busy now");
         msgBox.exec();
         return;
     }
