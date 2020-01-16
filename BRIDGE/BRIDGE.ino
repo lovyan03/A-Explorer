@@ -205,7 +205,7 @@ void loop() {
       while (true);
     }
 
-    Serial.write("A");
+    Serial.write('A');
 
     // ПОЛУЧЕНИЕ СОДЕРЖИМОГО ФАЙЛА
     while (true) {
@@ -219,10 +219,10 @@ void loop() {
         Serial.readBytes(buf, sizeOfPiece);
         file.write(buf, sizeOfPiece);
         free(buf);
-        Serial.write("A");
+        Serial.write('A');
         M5.Lcd.print("*");
       } else if (f == 'u') {
-        Serial.write("u");
+        Serial.write('u');
         break;
       }
     }
@@ -266,19 +266,19 @@ void loop() {
     strcpy(fileNameChar, fileName.c_str());
     if ((extension == "jpg") || (extension == "JPG")) {
       M5.Lcd.drawJpgFile(SPIFFS, fileNameChar, 0, 0);
-      Serial.write("X");
+      Serial.write('X');
     }
     else if ((extension == "png") || (extension == "PNG")) {
       M5.Lcd.drawPngFile(SPIFFS, fileNameChar, 0, 0);
-      Serial.write("X");
+      Serial.write('X');
     } 
     else if ((extension == "bmp") || (extension == "BMP")) {
       M5.Lcd.drawBmpFile(SPIFFS, fileNameChar, 0, 0);
-      Serial.write("X");
+      Serial.write('X');
     } 
     else {
       M5.Lcd.println("ext not suppored yet");
-      Serial.write("x");
+      Serial.write('x');
     }
   }
   else if (f == 'Q') {

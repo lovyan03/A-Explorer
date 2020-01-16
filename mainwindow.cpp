@@ -68,14 +68,32 @@ MainWindow::~MainWindow()
 
 void MainWindow::on_pushButton_clicked()
 {
-    //if (!connected || !ui->listWidget->currentItem()) return;
+    QMessageBox msgBox;
+    if (!connected) {
+        msgBox.setIcon(QMessageBox::Information);
+        msgBox.setText("connect to device, please");
+        msgBox.exec();
+        return;
+    }
+    if (mode != "") {
+        msgBox.setIcon(QMessageBox::Warning);
+        msgBox.setText("device is busy now");
+        msgBox.exec();
+        return;
+    }
+    if (ui->tableWidget->currentRow() == -1) {
+        msgBox.setIcon(QMessageBox::Information);
+        msgBox.setText("select file, please");
+        msgBox.exec();
+        return;
+    }
     QString folder = QFileDialog::getExistingDirectory();
     if (folder.length() == 0) {
         ui->statusbar->showMessage("C: empty downloading path");
         return;
     }
     /* ВЫБОР ИМЕНИ СКАЧИВАЕМОГО ФАЙЛА */
-    QString Name = ui->tableWidget->selectedItems().at(1)->text();
+    QString Name = "/" + ui->tableWidget->selectedItems().at(1)->text();
     QString fileName = Name.split(':')[0];
     size_t sizeOfFileName = fileName.length();
     QString fullFileName = folder + fileName;
@@ -98,6 +116,19 @@ void MainWindow::on_pushButton_clicked()
 
 void MainWindow::on_pushButton_2_clicked()
 {
+    QMessageBox msgBox;
+    if (!connected) {
+        msgBox.setIcon(QMessageBox::Information);
+        msgBox.setText("connect to device, please");
+        msgBox.exec();
+        return;
+    }
+    if (mode != "") {
+        msgBox.setIcon(QMessageBox::Warning);
+        msgBox.setText("device is busy now");
+        msgBox.exec();
+        return;
+    }
     /* ВЫБОР ИМЕНИ ФАЙЛА ВЫГРУЖАЕМОГО ФАЙЛА */
     QString fullFileName = QFileDialog::getOpenFileName();
     if (fullFileName.length() == 0) {
@@ -167,6 +198,7 @@ void MainWindow::on_pushButton_3_clicked()
         QObject::connect(&serial, &QSerialPort::readyRead, [&] {
             recived.append(serial.readAll());
             if (mode == "REBOOT") {
+               mode = "";
                recived.clear();
             }
 
@@ -262,7 +294,7 @@ void MainWindow::on_pushButton_3_clicked()
                        int row = ui->tableWidget->rowCount();
                        ui->tableWidget->insertRow(row);
                        ui->tableWidget->setItem(row, 0, icon_item);
-                       ui->tableWidget->setItem(row, 1, new QTableWidgetItem(Name));
+                       ui->tableWidget->setItem(row, 1, new QTableWidgetItem(Name.remove(0, 1)));
                        ui->tableWidget->setItem(row, 2, new QTableWidgetItem(QString::number(sizeOfFile)));
                        ui->tableWidget->setHorizontalHeaderLabels(QStringList() << "Type" << "Name" << "Size, Bytes");
                        ui->tableWidget->verticalHeader()->hide();
@@ -303,16 +335,14 @@ void MainWindow::on_pushButton_3_clicked()
             else if (mode == "EXECUTE") {
                 if (recived.length() == 1) {
                     if (recived[0] == 'X') {
-                        mode = "";
                         ui->statusbar->showMessage("file succefull executed");
                     }
                     else if (recived[0] == 'x') {
-                        mode = "";
                         ui->statusbar->showMessage("E: file not executed");
                     }
-                    else {}
-                    recived.clear();
                 }
+                recived.clear();
+                mode = "";
             }
             // more, baby
         });
@@ -348,13 +378,28 @@ void MainWindow::on_pushButton_6_clicked()
 
 void MainWindow::on_pushButton_4_clicked()
 {
-    //if (!connected || !ui->listWidget->currentItem()) return;
-    QString Name = ui->tableWidget->selectedItems().at(1)->text();
     QMessageBox msgBox;
+    if (!connected) {
+        msgBox.setIcon(QMessageBox::Information);
+        msgBox.setText("connect to device, please");
+        msgBox.exec();
+        return;
+    }
+    if (mode != "") {
+        msgBox.setIcon(QMessageBox::Warning);
+        msgBox.setText("device is busy now");
+        msgBox.exec();
+        return;
+    }
+    if (ui->tableWidget->currentRow() == -1) {
+        msgBox.setIcon(QMessageBox::Information);
+        msgBox.setText("select file, please");
+        msgBox.exec();
+        return;
+    }
+    QString Name = "/" + ui->tableWidget->selectedItems().at(1)->text();
     msgBox.setIcon(QMessageBox::Warning);
-    msgBox.setText("Please, confirm removing the file");
-
-    msgBox.setInformativeText("Do you want to delete " + Name + "?");
+    msgBox.setText("Do you want to delete " + Name.remove(0, 1) + "?");
     msgBox.setStandardButtons(QMessageBox::Yes | QMessageBox::Cancel);
     msgBox.setDefaultButton(QMessageBox::Cancel);
     int r = msgBox.exec();
@@ -373,11 +418,22 @@ void MainWindow::on_pushButton_4_clicked()
 
 void MainWindow::on_pushButton_5_clicked()
 {
-    if (!connected) return;
     QMessageBox msgBox;
+    if (!connected) {
+        QMessageBox msgBox;
+        msgBox.setIcon(QMessageBox::Information);
+        msgBox.setText("connect to device, please");
+        msgBox.exec();
+        return;
+    }
+    if (mode != "") {
+        msgBox.setIcon(QMessageBox::Warning);
+        msgBox.setText("device is busy now");
+        msgBox.exec();
+        return;
+    }
     msgBox.setIcon(QMessageBox::Warning);
-    msgBox.setText("Please, confirm erasing ALL files");
-    msgBox.setInformativeText("Do you want to erase?");
+    msgBox.setText("Please, confirm to erasing ALL files");
     msgBox.setStandardButtons(QMessageBox::Yes | QMessageBox::Cancel);
     msgBox.setDefaultButton(QMessageBox::Cancel);
     int r = msgBox.exec();
@@ -389,8 +445,32 @@ void MainWindow::on_pushButton_5_clicked()
 
 void MainWindow::on_pushButton_7_clicked()
 {
-    QString Name = ui->tableWidget->selectedItems().at(1)->text();
-    //if (!connected || !ui->listWidget->currentItem() || (getExtension(Name) == "")) return;
+    QMessageBox msgBox;
+    if (!connected) {
+        msgBox.setIcon(QMessageBox::Information);
+        msgBox.setText("connect to device, please");
+        msgBox.exec();
+        return;
+    }
+    if (mode != "") {
+        msgBox.setIcon(QMessageBox::Warning);
+        msgBox.setText("device is busy now");
+        msgBox.exec();
+        return;
+    }
+    if (ui->tableWidget->currentRow() == -1) {
+        msgBox.setIcon(QMessageBox::Information);
+        msgBox.setText("select file, please");
+        msgBox.exec();
+        return;
+    }
+    QString Name = "/" + ui->tableWidget->selectedItems().at(1)->text();
+    if (getExtension(Name) == "") {
+        msgBox.setIcon(QMessageBox::Information);
+        msgBox.setText("unsupported file for execution");
+        msgBox.exec();
+        return;
+    }
     QByteArray sizeOfFilename;
     sizeOfFilename.append((Name.length() >> 24) & 0xFF);
     sizeOfFilename.append((Name.length() >> 16) & 0xFF);
@@ -404,9 +484,19 @@ void MainWindow::on_pushButton_7_clicked()
 
 void MainWindow::on_pushButton_8_clicked()
 {
+    QMessageBox msgBox;
     if (!connected) {
+        msgBox.setIcon(QMessageBox::Information);
+        msgBox.setText("connect to device, please");
+        msgBox.exec();
         return;
     }
-    mode ="REBOOT";
+    if (mode != "") {
+        msgBox.setIcon(QMessageBox::Warning);
+        msgBox.setText("device is busy now"+mode);
+        msgBox.exec();
+        return;
+    }
+    mode = "REBOOT";
     serial.write("Q");
 }
