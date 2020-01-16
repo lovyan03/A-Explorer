@@ -35,7 +35,7 @@
    <enum>Qt::NoContextMenu</enum>
   </property>
   <property name="windowTitle">
-   <string>ESP32 SPIFFS A-Explorer by @dsiberia9s</string>
+   <string>ESP32 SPIFFS A-Explorer by M5Stack</string>
   </property>
   <property name="locale">
    <locale language="English" country="UnitedStates"/>

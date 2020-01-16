@@ -249,6 +249,10 @@ void MainWindow::on_pushButton_3_clicked()
                            iconPath = ":/new/icons/picture.png";
                        } else if ((extension == "wav") || (extension == "mp3") || (extension == "mid")) {
                            iconPath = ":/new/icons/music.png";
+                       } else if ((extension == "ini") || (extension == "js") || (extension == "css") || (extension == "xml")) {
+                           iconPath = ":/new/icons/engine.png";
+                       } else if ((extension == "html") || (extension == "htm")) {
+                           iconPath = ":/new/icons/world.png";
                        } else {
                            iconPath = ":/new/icons/unknown.png";
                        }
