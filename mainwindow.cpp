@@ -8,6 +8,8 @@
 bool connected = false;
 QSerialPort serial;
 QFile file;
+size_t totalMemory;
+size_t usedMemory;
 QByteArray recived;
 QString mode = "";
 int sizeOfFile = 0;
@@ -125,7 +127,7 @@ void MainWindow::on_pushButton_2_clicked()
     }
     if (mode != "") {
         msgBox.setIcon(QMessageBox::Warning);
-        msgBox.setText("device is busy now");
+        msgBox.setText("device is busy now :" + mode);
         msgBox.exec();
         return;
     }
@@ -136,8 +138,20 @@ void MainWindow::on_pushButton_2_clicked()
         return;
     }
     QStringList qst = fullFileName.split("/");
-    QString fileName = "/" + qst[qst.size() - 1];
-    int sizeOfFileName = fileName.length();
+    QString fileName = qst[qst.size() - 1];
+    // фильтр для защиты всей памяти от неверного формата имени
+    fileName.remove(QRegExp("[^A-Za-z0-9_.-']"));
+    fileName = fileName.mid(0, 256);
+    if ( (fileName.indexOf('.') > -1) && ((fileName.split('.')[0].length() == 0) || (fileName.split('.')[1].length() == 0))) {
+        msgBox.setIcon(QMessageBox::Critical);
+        msgBox.setText("incorrect file name");
+        msgBox.exec();
+        return;
+    }
+    fileName.prepend("/");
+
+    size_t sizeOfFileName = fileName.length();
+
     QByteArray sizeOfFileNameBytes;
     sizeOfFileNameBytes.append((sizeOfFileName >> 24) & 0xFF);
     sizeOfFileNameBytes.append((sizeOfFileName >> 16) & 0xFF);
@@ -153,7 +167,14 @@ void MainWindow::on_pushButton_2_clicked()
     }
     dataBytes = f.readAll();
     sizeOfFile = dataBytes.length();
-    f.close();
+
+    if ((size_t)sizeOfFile >= (totalMemory - usedMemory)) {
+        msgBox.setIcon(QMessageBox::Warning);
+        msgBox.setText("E: not enough free space");
+        msgBox.exec();
+        f.close();
+        return;
+    }
     QByteArray sizeOfFilBytes;
     sizeOfFilBytes.append((dataBytes.length() >> 24) & 0xFF);
     sizeOfFilBytes.append((dataBytes.length() >> 16) & 0xFF);
@@ -162,6 +183,7 @@ void MainWindow::on_pushButton_2_clicked()
     ui->statusbar->showMessage("uploading...");
 
     /* ДЕЙСТВИЯ С ПОСЛЕДОВАТЕЛЬНЫМ ПОРТОМ */
+    recived.clear();
     mode = "UPLOAD";
     serial.write("U");
     serial.write(sizeOfFileNameBytes);
@@ -242,8 +264,8 @@ void MainWindow::on_pushButton_3_clicked()
 
             else if (mode == "MEMORY") {
                 if (recived.length() >= 8) {
-                    size_t totalMemory = (scti(recived[0]) << 24) | (scti(recived[1]) << 16) | (scti(recived[2]) << 8) | scti(recived[3]);
-                    size_t usedMemory = (scti(recived[4]) << 24) | (scti(recived[5]) << 16) | (scti(recived[6]) << 8) | scti(recived[7]);
+                    totalMemory = (scti(recived[0]) << 24) | (scti(recived[1]) << 16) | (scti(recived[2]) << 8) | scti(recived[3]);
+                    usedMemory = (scti(recived[4]) << 24) | (scti(recived[5]) << 16) | (scti(recived[6]) << 8) | scti(recived[7]);
                     ui->memory->setRange(0, totalMemory);
                     ui->memory->setValue(totalMemory - usedMemory);
                     ui->totalMemory->setText(QString::number(totalMemory));
@@ -387,7 +409,7 @@ void MainWindow::on_pushButton_4_clicked()
     }
     if (mode != "") {
         msgBox.setIcon(QMessageBox::Warning);
-        msgBox.setText("device is busy now");
+        msgBox.setText("device is busy now" + mode);
         msgBox.exec();
         return;
     }
@@ -397,19 +419,19 @@ void MainWindow::on_pushButton_4_clicked()
         msgBox.exec();
         return;
     }
-    QString Name = "/" + ui->tableWidget->selectedItems().at(1)->text();
     msgBox.setIcon(QMessageBox::Warning);
-    msgBox.setText("Do you want to delete " + Name.remove(0, 1) + "?");
+    msgBox.setText("Do you want to delete " + ui->tableWidget->selectedItems().at(1)->text() + "?");
     msgBox.setStandardButtons(QMessageBox::Yes | QMessageBox::Cancel);
     msgBox.setDefaultButton(QMessageBox::Cancel);
     int r = msgBox.exec();
     if (r == QMessageBox::Yes) {
-        mode = "REMOVE";
+        QString Name = "/" + ui->tableWidget->selectedItems().at(1)->text();
         QByteArray sizeOfFilename;
         sizeOfFilename.append((Name.length() >> 24) & 0xFF);
         sizeOfFilename.append((Name.length() >> 16) & 0xFF);
         sizeOfFilename.append((Name.length() >> 8) & 0xFF);
         sizeOfFilename.append(Name.length() & 0xFF);
+        mode = "REMOVE";
         serial.write("R");
         serial.write(sizeOfFilename);
         serial.write(Name.toUtf8().constData());
@@ -493,7 +515,7 @@ void MainWindow::on_pushButton_8_clicked()
     }
     if (mode != "") {
         msgBox.setIcon(QMessageBox::Warning);
-        msgBox.setText("device is busy now"+mode);
+        msgBox.setText("device is busy now");
         msgBox.exec();
         return;
     }
