@@ -38,9 +38,9 @@ else: unix:!android: target.path = /opt/$${TARGET}/bin
 RESOURCES += \
     res.qrc
 #
-#CONFIG += serialport
-#RC_FILE = favicon.rc
-#CONFIG+= static
-#QMAKE_LFLAGS_RELEASE += -static -static-libgcc
+CONFIG += serialport
+RC_FILE = favicon.rc
+CONFIG+= static
+QMAKE_LFLAGS_RELEASE += -static -static-libgcc
 
 

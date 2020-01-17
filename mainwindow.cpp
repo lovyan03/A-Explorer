@@ -57,9 +57,9 @@ MainWindow::MainWindow(QWidget *parent)
     setWindowFlags(Qt::WindowCloseButtonHint | Qt::WindowMinMaxButtonsHint);
 
     ui->tableWidget->setColumnCount(3);
-    ui->tableWidget->setColumnWidth(0, 40);
-    ui->tableWidget->setColumnWidth(1, 210);
-    ui->tableWidget->setColumnWidth(2, 65);
+    ui->tableWidget->setColumnWidth(0, 28);
+    ui->tableWidget->setColumnWidth(1, 230);
+    ui->tableWidget->setColumnWidth(2, 77);
     ui->tableWidget->setSelectionBehavior(QAbstractItemView::SelectRows);
 }
 
@@ -332,7 +332,7 @@ void MainWindow::on_pushButton_3_clicked()
                        ui->tableWidget->setItem(row, 0, icon_item);
                        ui->tableWidget->setItem(row, 1, new QTableWidgetItem(Name));
                        ui->tableWidget->setItem(row, 2, new QTableWidgetItem(QString::number(sizeOfFile)));
-                       ui->tableWidget->setHorizontalHeaderLabels(QStringList() << "Type" << "Name" << "Size, Bytes");
+                       ui->tableWidget->setHorizontalHeaderLabels(QStringList() << "" << "Name" << "Size, Bytes");
                        ui->tableWidget->verticalHeader()->hide();
                    }
                    mode = "";

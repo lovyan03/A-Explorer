@@ -9,8 +9,8 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>550</width>
-    <height>335</height>
+    <width>590</width>
+    <height>340</height>
    </rect>
   </property>
   <property name="sizePolicy">
@@ -21,14 +21,14 @@
   </property>
   <property name="minimumSize">
    <size>
-    <width>550</width>
-    <height>335</height>
+    <width>590</width>
+    <height>340</height>
    </size>
   </property>
   <property name="maximumSize">
    <size>
-    <width>550</width>
-    <height>335</height>
+    <width>590</width>
+    <height>340</height>
    </size>
   </property>
   <property name="contextMenuPolicy">
@@ -44,9 +44,9 @@
    <widget class="QPushButton" name="pushButton">
     <property name="geometry">
      <rect>
-      <x>440</x>
-      <y>250</y>
-      <width>101</width>
+      <x>120</x>
+      <y>260</y>
+      <width>91</width>
       <height>31</height>
      </rect>
     </property>
@@ -57,9 +57,9 @@
    <widget class="QPushButton" name="pushButton_2">
     <property name="geometry">
      <rect>
-      <x>330</x>
-      <y>250</y>
-      <width>101</width>
+      <x>10</x>
+      <y>260</y>
+      <width>91</width>
       <height>31</height>
      </rect>
     </property>
@@ -93,9 +93,9 @@
    <widget class="QProgressBar" name="memory">
     <property name="geometry">
      <rect>
-      <x>80</x>
+      <x>90</x>
       <y>140</y>
-      <width>131</width>
+      <width>121</width>
       <height>31</height>
      </rect>
     </property>
@@ -152,9 +152,9 @@
    <widget class="QPushButton" name="pushButton_4">
     <property name="geometry">
      <rect>
-      <x>220</x>
-      <y>250</y>
-      <width>101</width>
+      <x>10</x>
+      <y>220</y>
+      <width>91</width>
       <height>31</height>
      </rect>
     </property>
@@ -167,7 +167,7 @@
      <rect>
       <x>10</x>
       <y>140</y>
-      <width>61</width>
+      <width>71</width>
       <height>31</height>
      </rect>
     </property>
@@ -194,9 +194,9 @@
    <widget class="QPushButton" name="pushButton_7">
     <property name="geometry">
      <rect>
-      <x>10</x>
-      <y>250</y>
-      <width>81</width>
+      <x>120</x>
+      <y>220</y>
+      <width>91</width>
       <height>31</height>
      </rect>
     </property>
@@ -222,8 +222,8 @@
      <rect>
       <x>220</x>
       <y>10</y>
-      <width>321</width>
-      <height>231</height>
+      <width>361</width>
+      <height>281</height>
      </rect>
     </property>
    </widget>
@@ -233,8 +233,8 @@
     <rect>
      <x>0</x>
      <y>0</y>
-     <width>550</width>
-     <height>22</height>
+     <width>590</width>
+     <height>21</height>
     </rect>
    </property>
   </widget>
