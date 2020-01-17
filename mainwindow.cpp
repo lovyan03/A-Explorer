@@ -68,6 +68,7 @@ MainWindow::~MainWindow()
     delete ui;
 }
 
+// download
 void MainWindow::on_pushButton_clicked()
 {
     QMessageBox msgBox;
@@ -95,18 +96,22 @@ void MainWindow::on_pushButton_clicked()
         return;
     }
     /* ВЫБОР ИМЕНИ СКАЧИВАЕМОГО ФАЙЛА */
-    QString Name = "/" + ui->tableWidget->selectedItems().at(1)->text();
-    QString fileName = Name.split(':')[0];
+    QString fileName = ui->tableWidget->selectedItems().at(1)->text();
     size_t sizeOfFileName = fileName.length();
-    QString fullFileName = folder + fileName;
-    QByteArray sizeOfFileNameBytes;
+    QString savingName_ = fileName;
+    savingName_.replace('/', '-');
+    QString savingName = folder + "/" + savingName_.remove(0, 1);
+    ui->statusbar->showMessage(savingName);
 
+    file.setFileName(savingName);
+
+    QByteArray sizeOfFileNameBytes;
     /* ПОЛУЧЕНИЕ РАЗМЕРА ИМЕНИ СКАЧИВАЕМОГО ФАЙЛА */
     sizeOfFileNameBytes.append((sizeOfFileName >> 24) & 0xFF);
     sizeOfFileNameBytes.append((sizeOfFileName >> 16) & 0xFF);
     sizeOfFileNameBytes.append((sizeOfFileName >> 8) & 0xFF);
     sizeOfFileNameBytes.append(sizeOfFileName & 0xFF);
-    file.setFileName(fullFileName);
+
     ui->statusbar->showMessage("downloading, please wait...");
 
     /* ДЕЙСТВИЯ С ПОСЛЕДОВАТЕЛЬНЫМ ПОРТОМ */
@@ -116,6 +121,7 @@ void MainWindow::on_pushButton_clicked()
     serial.write(fileName.toUtf8().constData());
 }
 
+// upload
 void MainWindow::on_pushButton_2_clicked()
 {
     QMessageBox msgBox;
@@ -226,12 +232,20 @@ void MainWindow::on_pushButton_3_clicked()
 
            if  (mode == "DOWNLOAD") {
                 if (sizeOfFile == 0) {
-                    if (recived.length() >= 4) {
+                    if (recived.length() == 1) {
+                        if (recived[0] == 'd') {
+                            recived.clear();
+                            mode = "";
+                            sizeOfFile = 0;
+                            ui->statusbar->showMessage("E: can't download the file");
+                        }
+                    }
+                    else if (recived.length() >= 4) {
                         sizeOfFile = (scti(recived[0]) << 24) | (scti(recived[1]) << 16) | (scti(recived[2]) << 8) | scti(recived[3]);
                         recived.remove(0, 4);
                     }
                 }
-                if (recived.length() == sizeOfFile) {
+                else if (recived.length() == sizeOfFile) {
                     file.open(QFile::WriteOnly);
                     file.write(recived);
                     file.close();
@@ -243,8 +257,8 @@ void MainWindow::on_pushButton_3_clicked()
                     int p = (recived.length() * 100) / sizeOfFile;
                     ui->statusbar->showMessage("downloaded " + QString::number(p) + "%");
                 }
-
             }
+
             else if (mode == "UPLOAD") {
                 if (recived[0] == 'A') {
                     rightWrite();
@@ -316,7 +330,7 @@ void MainWindow::on_pushButton_3_clicked()
                        int row = ui->tableWidget->rowCount();
                        ui->tableWidget->insertRow(row);
                        ui->tableWidget->setItem(row, 0, icon_item);
-                       ui->tableWidget->setItem(row, 1, new QTableWidgetItem(Name.remove(0, 1)));
+                       ui->tableWidget->setItem(row, 1, new QTableWidgetItem(Name));
                        ui->tableWidget->setItem(row, 2, new QTableWidgetItem(QString::number(sizeOfFile)));
                        ui->tableWidget->setHorizontalHeaderLabels(QStringList() << "Type" << "Name" << "Size, Bytes");
                        ui->tableWidget->verticalHeader()->hide();
@@ -425,7 +439,7 @@ void MainWindow::on_pushButton_4_clicked()
     msgBox.setDefaultButton(QMessageBox::Cancel);
     int r = msgBox.exec();
     if (r == QMessageBox::Yes) {
-        QString Name = "/" + ui->tableWidget->selectedItems().at(1)->text();
+        QString Name = ui->tableWidget->selectedItems().at(1)->text();
         QByteArray sizeOfFilename;
         sizeOfFilename.append((Name.length() >> 24) & 0xFF);
         sizeOfFilename.append((Name.length() >> 16) & 0xFF);
@@ -486,7 +500,7 @@ void MainWindow::on_pushButton_7_clicked()
         msgBox.exec();
         return;
     }
-    QString Name = "/" + ui->tableWidget->selectedItems().at(1)->text();
+    QString Name = ui->tableWidget->selectedItems().at(1)->text();
     if (getExtension(Name) == "") {
         msgBox.setIcon(QMessageBox::Information);
         msgBox.setText("unsupported file for execution");

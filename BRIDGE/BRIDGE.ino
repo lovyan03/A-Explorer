@@ -7,7 +7,7 @@ void bridge(void * pvParameters) {
   while (true) {
     while (Serial.available() == 0) delay(5);
     char f = Serial.read();
-    if (f == 'D') {
+    if (f == 'D') { 
       //M5.Lcd.println("DOWNLOAD MODE");
   
       // ПОЛУЧЕНИЕ РАЗМЕРА ИМЕНИ СКАЧИВАЕМОГО ФАЙЛА
@@ -32,6 +32,7 @@ void bridge(void * pvParameters) {
       File file = SPIFFS.open(fileName, FILE_READ);
       if (!file) {
         //M5.Lcd.print("E: can't open the file");
+        //M5.Lcd.println(fileName);
         Serial.write('d');
       } else {
         // ОТПРАВКА РАЗМЕРА ФАЙЛА
