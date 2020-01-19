@@ -3,6 +3,9 @@
 #include "FS.h"
 
 void bridge(void * pvParameters) {
+  static constexpr uint32_t timeout_msec = 2000;
+  static constexpr uint32_t bufsize = 16384;
+
   SPIFFS.begin(true);
   while (true) {
     while (Serial.available() == 0) delay(5);
@@ -203,28 +206,42 @@ void bridge(void * pvParameters) {
         Serial.write('u');
         while (true);
       } else {
-          Serial.write('A');
-      
-          // ПОЛУЧЕНИЕ СОДЕРЖИМОГО ФАЙЛА
-          while (true) {
-            while (Serial.available() == 0) delay(5);
-            char f = Serial.read();
-            if (f == 'U') {
-              while (Serial.available() == 0) delay(5);
-              uint8_t sizeOfPiece = (uint8_t)Serial.read();
-              while (Serial.available() < sizeOfPiece) delay(5);
-              byte * buf = (byte*)malloc(sizeof(byte) * sizeOfPiece);
-              Serial.readBytes(buf, sizeOfPiece);
-              file.write(buf, sizeOfPiece);
-              free(buf);
-              Serial.write('A');
-              //M5.Lcd.print("*");
-            } else if (f == 'u') {
-              Serial.write('u');
-              break;
+        Serial.write('A');
+        byte * buf = (byte*)malloc(bufsize);
+        uint32_t bufindex = 0;
+        // ПОЛУЧЕНИЕ СОДЕРЖИМОГО ФАЙЛА
+        uint32_t nodata_count = 0;
+        while (nodata_count < timeout_msec) {
+          nodata_count = 0;
+          while (Serial.available() == 0) { delay(1); if (++nodata_count >= timeout_msec) goto UPLOAD_TIMEOUT;  }
+          char f = Serial.read();
+          if (f == 'u')  break;
+          if (f == 'U') {
+            nodata_count = 0;
+            Serial.write('A');
+            while (Serial.available() == 0) { delay(1); if (++nodata_count >= timeout_msec) goto UPLOAD_TIMEOUT;  }
+            uint8_t sizeOfPiece = (uint8_t)Serial.read();
+            if (bufindex + sizeOfPiece > bufsize) {
+              file.write(buf, bufindex);
+              bufindex = 0;
             }
+            uint8_t len = 0;
+            while (sizeOfPiece) {
+              nodata_count = 0;
+              while ((len = Serial.available()) == 0) { delay(1); if (++nodata_count >= timeout_msec) goto UPLOAD_TIMEOUT;  }
+              if (len > sizeOfPiece) len = sizeOfPiece;
+              Serial.readBytes(&buf[bufindex], len);
+              bufindex += len;
+              sizeOfPiece -= len;
+            }
+            //M5.Lcd.print("*");
+          }
         }
+        if (bufindex) file.write(buf, bufindex);
+UPLOAD_TIMEOUT:
+        Serial.write('u');
         file.close();
+        free(buf);
       }
     }
     
@@ -248,36 +265,30 @@ void bridge(void * pvParameters) {
       //M5.Lcd.print("Filename: ");
       //M5.Lcd.println(fileName);
       String extension = "";
-      bool f = false;
-      for (int i = 0; i < fileName.length(); i++) {
-        if (fileName[i] == '.') {
-          f = true;
-        } else {
-          if (f) {
-            extension += fileName[i];
-          }
+      int idx = fileName.lastIndexOf('.');
+      bool success = (idx >= 0);
+      if (success) {
+        extension = fileName.substring(idx + 1);
+        extension.toLowerCase();
+
+        //M5.Lcd.print("Ext: ");
+        //M5.Lcd.println(extension);
+        if ((extension == "jpg") || (extension == "jpeg")) {
+          M5.Lcd.drawJpgFile(SPIFFS, fileName.c_str(), 0, 0);
+        }
+        else if (extension == "png") {
+          M5.Lcd.drawPngFile(SPIFFS, fileName.c_str(), 0, 0);
+        } 
+        else if (extension == "bmp") {
+          M5.Lcd.drawBmpFile(SPIFFS, fileName.c_str(), 0, 0);
+        } 
+        else {
+          success = false;
+          //M5.Lcd.println("ext not suppored yet");
         }
       }
-      //M5.Lcd.print("Ext: ");
-      //M5.Lcd.println(extension);
-      char * fileNameChar = new char[fileName.length() + 1];
-      strcpy(fileNameChar, fileName.c_str());
-      if ((extension == "jpg") || (extension == "JPG")) {
-        M5.Lcd.drawJpgFile(SPIFFS, fileNameChar, 0, 0);
-        Serial.write('X');
-      }
-      else if ((extension == "png") || (extension == "PNG")) {
-        M5.Lcd.drawPngFile(SPIFFS, fileNameChar, 0, 0);
-        Serial.write('X');
-      } 
-      else if ((extension == "bmp") || (extension == "BMP")) {
-        M5.Lcd.drawBmpFile(SPIFFS, fileNameChar, 0, 0);
-        Serial.write('X');
-      } 
-      else {
-        //M5.Lcd.println("ext not suppored yet");
-        Serial.write('x');
-      }
+      Serial.write(success ? 'X' : 'x');
+
     }
     else if (f == 'Q') {
       //M5.Lcd.println("RESET MODE");
